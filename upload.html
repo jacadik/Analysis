@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Documents{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-area {
+        border: 2px dashed var(--neutral-300);
+        border-radius: var(--radius-lg);
+        padding: 3rem 2rem;
+        text-align: center;
+        background-color: var(--neutral-50);
+        transition: all var(--transition-normal);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .upload-area:hover, .upload-area.active-drag {
+        border-color: var(--primary);
+        background-color: rgba(37, 99, 235, 0.05);
+    }
+    
+    .upload-area.active-drag {
+        transform: scale(1.02);
+    }
+    
+    .upload-icon {
+        font-size: 3.5rem;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        transition: transform var(--transition-normal);
+    }
+    
+    .upload-area:hover .upload-icon {
+        transform: translateY(-5px);
+    }
+    
+    .upload-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+        color: var(--neutral-800);
+    }
+    
+    .upload-text {
+        color: var(--neutral-500);
+        margin-bottom: 1.5rem;
+    }
+    
+    .file-type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        background-color: white;
+        border: 1px solid var(--neutral-200);
+        margin: 0 0.5rem 1rem 0.5rem;
+        font-weight: 500;
+    }
+    
+    .file-type-badge i {
+        margin-right: 0.5rem;
+    }
+    
+    .file-item {
+        background-color: white;
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        transition: all var(--transition-normal);
+        animation: slideIn var(--transition-normal) ease;
+    }
+    
+    .file-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .file-icon {
+        font-size: 1.5rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .file-icon.pdf {
+        color: var(--error);
+        background-color: rgba(239, 68, 68, 0.1);
+    }
+    
+    .file-icon.docx {
+        color: var(--primary);
+        background-color: rgba(37, 99, 235, 0.1);
+    }
+    
+    .file-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .file-name {
+        font-weight: 500;
+        color: var(--neutral-800);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .file-meta {
+        font-size: 0.875rem;
+        color: var(--neutral-500);
+    }
+    
+    .processing-step {
+        position: relative;
+        padding-left: 2.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .step-icon {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1.75rem;
+        height: 1.75rem;
+        background-color: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .step-title {
+        font-weight: 600;
+        color: var(--neutral-800);
+        margin-bottom: 0.25rem;
+    }
+    
+    .step-description {
+        color: var(--neutral-500);
+        font-size: 0.925rem;
+        margin-bottom: 0;
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="mb-1"><i class="bi bi-cloud-upload me-2"></i>Upload Documents</h1>
+        <p class="text-muted mb-0">Upload and analyze PDF and Word documents</p>
+    </div>
+    <!-- Removed "View Documents" button -->
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex align-items-center">
+                <i class="bi bi-upload me-2 text-primary"></i>
+                <span>Select Files</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" class="upload-form">
+                    <div class="mb-4">
+                        <div class="upload-area" id="uploadArea">
+                            <i class="bi bi-cloud-arrow-up upload-icon"></i>
+                            <h4 class="upload-title">Drag & Drop Files</h4>
+                            <p class="upload-text">or click to browse files</p>
+                            
+                            <div class="d-flex justify-content-center flex-wrap">
+                                <div class="file-type-badge">
+                                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                    <span>PDF</span>
+                                </div>
+                                <div class="file-type-badge">
+                                    <i class="bi bi-file-earmark-word text-primary"></i>
+                                    <span>DOCX</span>
+                                </div>
+                            </div>
+                            
+                            <input class="form-control d-none" type="file" id="fileInput" name="file" multiple accept=".pdf,.docx">
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-between mt-2">
+                            <div class="text-muted small">
+                                <i class="bi bi-info-circle me-1"></i> Maximum file size: 16MB
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="browseButton">
+                                <i class="bi bi-folder2-open me-1"></i> Browse Files
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="fileList" class="mb-4"></div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadButton" disabled>
+                            <i class="bi bi-cloud-upload me-1"></i> Upload and Process Files
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header d-flex align-items-center">
+                <i class="bi bi-info-circle me-2 text-primary"></i>
+                <span>How It Works</span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex">
+                        <i class="bi bi-lightbulb-fill me-3 fs-4"></i>
+                        <div>
+                            <strong>Automatic Processing</strong>
+                            <p class="mb-0">Files will be analyzed immediately after upload to extract text, identify paragraphs, and prepare for content analysis.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="text-primary mb-3">Processing Steps</h5>
+                <div class="processing-steps">
+                    <div class="processing-step">
+                        <div class="step-icon">1</div>
+                        <h6 class="step-title">Text Extraction</h6>
+                        <p class="step-description">Full text is extracted from your documents and stored securely in the database</p>
+                    </div>
+                    
+                    <div class="processing-step">
+                        <div class="step-icon">2</div>
+                        <h6 class="step-title">Paragraph Analysis</h6>
+                        <p class="step-description">Content is broken into meaningful paragraphs for better organization and comparison</p>
+                    </div>
+                    
+                    <div class="processing-step">
+                        <div class="step-icon">3</div>
+                        <h6 class="step-title">Preview Generation</h6>
+                        <p class="step-description">Document previews are generated for easy navigation and review</p>
+                    </div>
+                    
+                    <div class="processing-step">
+                        <div class="step-icon">4</div>
+                        <h6 class="step-title">Content Comparison</h6>
+                        <p class="step-description">Documents are prepared for similarity analysis and comparison</p>
+                    </div>
+                </div>
+                
+                <!-- Removed "View Existing Documents" button -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const browseButton = document.getElementById('browseButton');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadButton = document.getElementById('uploadButton');
+        
+        // Click on the browse button triggers file input
+        browseButton.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Click on the upload area also triggers file input
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            updateFileList();
+        });
+        
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            uploadArea.classList.add('active-drag');
+        }
+        
+        function unhighlight() {
+            uploadArea.classList.remove('active-drag');
+        }
+        
+        uploadArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            fileInput.files = dt.files;
+            updateFileList();
+        }
+        
+        function updateFileList() {
+            const files = fileInput.files;
+            
+            if (files.length > 0) {
+                let html = '';
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const fileSize = formatFileSize(file.size);
+                    const fileType = getFileExtension(file.name);
+                    const icon = fileType === 'pdf' ? 'bi-file-earmark-pdf' : 'bi-file-earmark-word';
+                    const iconClass = fileType === 'pdf' ? 'pdf' : 'docx';
+                    
+                    html += `
+                    <div class="file-item" style="animation-delay: ${i * 100}ms">
+                        <div class="file-icon ${iconClass}">
+                            <i class="bi ${icon}"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-meta">
+                                <span class="badge bg-secondary">${fileType.toUpperCase()}</span>
+                                <span class="text-muted ms-2">${fileSize}</span>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+                
+                fileList.innerHTML = html;
+                uploadButton.disabled = false;
+            } else {
+                fileList.innerHTML = '';
+                uploadButton.disabled = true;
+            }
+        }
+        
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Upload button loading state
+        document.querySelector('form.upload-form').addEventListener('submit', function() {
+            uploadButton.disabled = true;
+            uploadButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Uploading...';
+        });
+    });
+</script>
+{% endblock %}

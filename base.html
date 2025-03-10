@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Document Analyzer{% endblock %}</title>
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            /* Color palette */
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #0ea5e9;
+            --secondary-light: #38bdf8;
+            --accent: #8b5cf6;
+            --neutral-50: #f8fafc;
+            --neutral-100: #e2e8f0;
+            --neutral-200: #cbd5e1;
+            --neutral-300: #94a3b8;
+            --neutral-400: #64748b;
+            --neutral-500: #475569;
+            --neutral-600: #334155;
+            --neutral-700: #1e293b;
+            --neutral-800: #0f172a;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            
+            /* Transitions */
+            --transition-fast: 150ms;
+            --transition-normal: 250ms;
+            --transition-slow: 350ms;
+            
+            /* Border radius */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+        }
+        
+        /* Global styles */
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--neutral-50);
+            color: var(--neutral-700);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            color: var(--neutral-800);
+        }
+        
+        /* Monospace text */
+        pre, code, .mono-text {
+            font-family: var(--font-mono);
+        }
+        
+        /* Layout */
+        #wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar styles */
+        #sidebar-wrapper {
+            min-height: 100vh;
+            width: 260px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform var(--transition-normal) ease;
+            background: linear-gradient(180deg, var(--primary-dark), var(--primary));
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .sidebar-brand {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-brand-icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
+        
+        .sidebar-brand-text {
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: -0.01em;
+        }
+        
+        #sidebar-wrapper .list-group {
+            padding: 1rem 0;
+        }
+        
+        /* Fixed sidebar navigation styles */
+        #sidebar-wrapper .list-group-item {
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            background-color: transparent !important; /* Force transparent background */
+            color: rgba(255, 255, 255, 0.8) !important; /* Force text color */
+            border-left: 3px solid transparent;
+            transition: all var(--transition-normal);
+            display: flex;
+            align-items: center;
+            text-decoration: none; /* Ensure no underlines on links */
+            margin: 0; /* Reset margins */
+            border-radius: 0; /* Remove any border radius */
+        }
+        
+        #sidebar-wrapper .list-group-item i {
+            font-size: 1.1rem;
+            margin-right: 0.75rem;
+            transition: all var(--transition-normal);
+        }
+        
+        #sidebar-wrapper .list-group-item:hover {
+            color: white !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-left-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        #sidebar-wrapper .list-group-item.active {
+            color: white !important;
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            border-left: 3px solid white;
+        }
+        
+        #sidebar-wrapper .list-group-item.active i {
+            color: var(--secondary-light);
+        }
+        
+        /* Content area */
+        #page-content-wrapper {
+            flex: 1;
+            padding-left: 260px;
+            width: 100%;
+            transition: padding-left var(--transition-normal);
+        }
+        
+        /* Top navigation */
+        .top-bar {
+            height: 64px;
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--neutral-600);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin-right: 1rem;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-normal);
+        }
+        
+        .menu-toggle:hover {
+            color: var(--primary);
+            background-color: var(--neutral-100);
+        }
+        
+        /* Main content area */
+        .content-wrapper {
+            padding: 1.5rem;
+            min-height: calc(100vh - 64px - 60px); /* Account for top bar and footer */
+        }
+        
+        /* Footer */
+        footer {
+            padding: 1rem 1.5rem;
+            background-color: white;
+            border-top: 1px solid var(--neutral-100);
+            color: var(--neutral-500);
+            font-size: 0.875rem;
+        }
+        
+        /* Card styling */
+        .card {
+            border: none;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-normal);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid var(--neutral-100);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+        }
+        
+        .card-header.bg-light {
+            background-color: var(--neutral-50);
+        }
+        
+        .card-body {
+            padding: 1.25rem;
+        }
+        
+        .card-footer {
+            background-color: var(--neutral-50);
+            border-top: 1px solid var(--neutral-100);
+            padding: 1rem 1.25rem;
+        }
+        
+        /* Button styling */
+        .btn {
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-normal);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-secondary:hover, .btn-secondary:focus {
+            background-color: var(--secondary-light);
+            border-color: var(--secondary-light);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .btn-danger {
+            background-color: var(--error);
+            border-color: var(--error);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: var(--primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline-secondary {
+            color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-outline-secondary:hover, .btn-outline-secondary:focus {
+            background-color: var(--secondary);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Alert styling */
+        .alert {
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+        }
+        
+        .alert-success {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+        
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .alert-info {
+            background-color: rgba(14, 165, 233, 0.1);
+            color: var(--secondary);
+        }
+        
+        /* Badge styling */
+        .badge {
+            font-weight: 500;
+            border-radius: 9999px;
+            padding: 0.35em 0.65em;
+        }
+        
+        .badge.bg-primary {
+            background-color: var(--primary) !important;
+        }
+        
+        .badge.bg-secondary {
+            background-color: var(--secondary) !important;
+        }
+        
+        .badge.bg-success {
+            background-color: var(--success) !important;
+        }
+        
+        .badge.bg-danger {
+            background-color: var(--error) !important;
+        }
+        
+        .badge.bg-warning {
+            background-color: var(--warning) !important;
+        }
+        
+        /* Table styling */
+        .table {
+            color: var(--neutral-700);
+        }
+        
+        .table thead th {
+            background-color: var(--neutral-50);
+            color: var(--neutral-600);
+            font-weight: 600;
+            border-bottom-width: 1px;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(37, 99, 235, 0.05);
+        }
+        
+        /* Form controls */
+        .form-control, .form-select {
+            border-color: var(--neutral-200);
+            border-radius: var(--radius-md);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.925rem;
+            transition: all var(--transition-normal);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--neutral-600);
+            margin-bottom: 0.375rem;
+        }
+        
+        /* Page header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--neutral-100);
+        }
+        
+        .page-header h1, .page-header h2 {
+            margin-bottom: 0;
+        }
+        
+        /* Transitions and animations */
+        .fade-in {
+            animation: fadeIn var(--transition-normal) ease;
+        }
+        
+        .slide-up {
+            animation: slideUp var(--transition-normal) ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 992px) {
+            #sidebar-wrapper {
+                transform: translateX(-100%);
+            }
+            
+            #page-content-wrapper {
+                padding-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            #wrapper.toggled #sidebar-wrapper {
+                transform: translateX(0);
+            }
+            
+            .overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                transition: opacity var(--transition-normal);
+            }
+            
+            #wrapper.toggled .overlay {
+                display: block;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .content-wrapper {
+                padding: 1rem;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--neutral-100);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--neutral-300);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--neutral-400);
+        }
+        
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <!-- Mobile overlay -->
+        <div class="overlay" id="overlay"></div>
+        
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <a href="{{ url_for('index') }}" class="sidebar-brand">
+                <span class="sidebar-brand-icon">
+                    <i class="bi bi-file-earmark-text"></i>
+                </span>
+                <span class="sidebar-brand-text">Document Analyzer</span>
+            </a>
+            
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-house-door"></i> Home
+                </a>
+                
+                <a href="{{ url_for('documents.upload') }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-cloud-upload"></i> Upload
+                </a>
+                
+                <a href="{{ url_for('documents.list_documents') }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-files"></i> Documents
+                </a>
+                
+                <a href="{{ url_for('view_paragraphs') }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-text-paragraph"></i> Paragraphs
+                </a>
+                
+                <a href="{{ url_for('similarity_map') }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-diagram-3"></i> Content Map
+                </a>
+                
+                <a href="{{ url_for('manage_tags') }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-tags"></i> Tags
+                </a>
+                
+                <a href="{{ url_for('logs') }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-journal-text"></i> Logs
+                </a>
+            </div>
+        </div>
+        
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <!-- Top Navigation -->
+            <nav class="top-bar">
+                <button class="menu-toggle" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                
+                <!-- Removed the Upload and Export buttons from here -->
+            </nav>
+
+            <!-- Main Content Container -->
+            <div class="content-wrapper">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show mb-4" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+            
+            <!-- Footer -->
+            <footer class="footer mt-auto">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0">Document Analyzer - Content Analysis Tool</p>
+                        </div>
+                        <!-- Removed the Upload and Documents buttons from here -->
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Sidebar Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const wrapper = document.getElementById('wrapper');
+            const overlay = document.getElementById('overlay');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    wrapper.classList.toggle('toggled');
+                });
+            }
+            
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    wrapper.classList.remove('toggled');
+                });
+            }
+            
+            // Set active menu item based on current URL
+            const currentLocation = window.location.pathname;
+            const menuItems = document.querySelectorAll('.list-group-item');
+            let exactMatchFound = false;
+            
+            // First pass - look for exact matches
+            menuItems.forEach(item => {
+                const href = item.getAttribute('href');
+                if (href === currentLocation) {
+                    item.classList.add('active');
+                    exactMatchFound = true;
+                }
+            });
+            
+            // Second pass - if no exact match, look for path prefixes
+            // Only if no exact match was found
+            if (!exactMatchFound) {
+                menuItems.forEach(item => {
+                    const href = item.getAttribute('href');
+                    // Skip the home page for prefix matching to avoid it always matching
+                    if (href !== '/' && currentLocation.startsWith(href)) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+            
+            // Page load animations
+            document.querySelectorAll('.card').forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 + (index * 50));
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

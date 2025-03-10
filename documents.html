@@ -1,0 +1,666 @@
+{% extends "base.html" %}
+
+{% block title %}Document Library{% endblock %}
+
+{% block extra_css %}
+<style>
+    .document-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .document-card {
+        height: 100%;
+        background: white;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-normal);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .document-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .document-header {
+        padding: 1.25rem;
+        display: flex;
+        align-items: flex-start;
+        border-bottom: 1px solid var(--neutral-100);
+    }
+    
+    .document-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .document-icon.pdf {
+        color: var(--error);
+        background-color: rgba(239, 68, 68, 0.1);
+    }
+    
+    .document-icon.docx {
+        color: var(--primary);
+        background-color: rgba(37, 99, 235, 0.1);
+    }
+    
+    .document-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        line-height: 1.3;
+        margin-bottom: 0.25rem;
+        color: var(--neutral-800);
+        word-break: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .document-content {
+        padding: 1.25rem;
+        flex: 1;
+    }
+    
+    .document-meta {
+        margin-bottom: 1.25rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    
+    .meta-label {
+        color: var(--neutral-500);
+        font-size: 0.925rem;
+    }
+    
+    .meta-value {
+        font-weight: 500;
+        color: var(--neutral-700);
+        font-size: 0.925rem;
+    }
+    
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+    
+    .status-processed {
+        background-color: rgba(34, 197, 94, 0.1);
+        color: var(--success);
+    }
+    
+    .status-error {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: var(--error);
+    }
+    
+    .status-pending {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+    
+    .document-footer {
+        border-top: 1px solid var(--neutral-100);
+        padding: 1rem;
+        background-color: var(--neutral-50);
+    }
+    
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        margin-top: 0.5rem;
+    }
+    
+    .document-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    /* Table view styles */
+    .view-toggle-btn {
+        border-radius: var(--radius-md);
+        padding: 0.5rem;
+        background: none;
+        border: 1px solid var(--neutral-200);
+        color: var(--neutral-600);
+        transition: all var(--transition-normal);
+    }
+    
+    .view-toggle-btn:hover, .view-toggle-btn.active {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+    
+    .document-table th {
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 10;
+        font-weight: 600;
+        color: var(--neutral-600);
+    }
+    
+    .document-table tr {
+        vertical-align: middle;
+    }
+    
+    .document-table td {
+        padding: 0.875rem 1rem;
+    }
+    
+    .table-document-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        margin-right: 0.75rem;
+        font-size: 1.25rem;
+    }
+    
+    .table-document-title {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        line-height: 1.2;
+    }
+    
+    .search-container {
+        position: relative;
+        max-width: 300px;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--neutral-400);
+        pointer-events: none;
+    }
+    
+    .search-input {
+        padding-left: 2.5rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--neutral-200);
+        transition: all var(--transition-normal);
+    }
+    
+    .search-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--neutral-300);
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-title {
+        font-weight: 600;
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: var(--neutral-700);
+    }
+    
+    .empty-description {
+        color: var(--neutral-500);
+        margin-bottom: 1.5rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .view-transition {
+        transition: opacity var(--transition-normal), transform var(--transition-normal);
+    }
+    
+    .view-hidden {
+        opacity: 0;
+        transform: translateY(20px);
+        pointer-events: none;
+        position: absolute;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="mb-1"><i class="bi bi-files me-2"></i>Document Library</h1>
+        <p class="text-muted mb-0">Browse and manage your uploaded documents</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if documents %}
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAllModal">
+            <i class="bi bi-trash me-1"></i> Delete All
+        </button>
+        {% endif %}
+        <a href="{{ url_for('export') }}" class="btn btn-outline-primary">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export
+        </a>
+        <a href="{{ url_for('documents.upload') }}" class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i> Upload
+        </a>
+    </div>
+</div>
+
+{% if documents %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <h5 class="mb-0 me-4">Documents</h5>
+            <div class="btn-group">
+                <button type="button" class="view-toggle-btn active" id="gridViewBtn" title="Grid view">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </button>
+                <button type="button" class="view-toggle-btn" id="tableViewBtn" title="Table view">
+                    <i class="bi bi-list"></i>
+                </button>
+            </div>
+        </div>
+        <div class="search-container">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="form-control search-input" id="documentSearch" placeholder="Search documents...">
+        </div>
+    </div>
+    <div class="card-body p-3">
+        <!-- Grid View -->
+        <div id="gridView" class="view-transition">
+            <div class="document-grid">
+                {% for doc in documents %}
+                <div class="document-card" data-search-item data-search-text="{{ doc.original_filename }} {{ doc.file_type }} {{ doc.status }}">
+                    <div class="document-header">
+                        <div class="document-icon {{ doc.file_type }}">
+                            {% if doc.file_type == 'pdf' %}
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            {% elif doc.file_type == 'docx' %}
+                            <i class="bi bi-file-earmark-word"></i>
+                            {% else %}
+                            <i class="bi bi-file-earmark-text"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h3 class="document-title">{{ doc.original_filename }}</h3>
+                            <span class="badge bg-secondary">{{ doc.file_type.upper() }}</span>
+                        </div>
+                    </div>
+                    <div class="document-content">
+                        <div class="document-meta">
+                            <div class="meta-item">
+                                <span class="meta-label">Size</span>
+                                <span class="meta-value">{{ (doc.file_size / 1024) | round(2) }} KB</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Pages</span>
+                                <span class="meta-value">{{ doc.page_count }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Paragraphs</span>
+                                <span class="meta-value">{{ doc.paragraph_count }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Date</span>
+                                <span class="meta-value">{{ doc.upload_date.strftime('%Y-%m-%d') }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mb-2">
+                            {% if doc.status == 'processed' %}
+                            <div class="status-indicator status-processed">
+                                <i class="bi bi-check-circle me-1"></i> {{ doc.status }}
+                            </div>
+                            {% elif doc.status == 'error' %}
+                            <div class="status-indicator status-error">
+                                <i class="bi bi-exclamation-triangle me-1"></i> {{ doc.status }}
+                            </div>
+                            {% else %}
+                            <div class="status-indicator status-pending">
+                                <i class="bi bi-hourglass-split me-1"></i> {{ doc.status }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if doc.get_tags() %}
+                        <div>
+                            <div class="meta-label mb-1">Tags</div>
+                            <div class="tag-list">
+                                {% for tag in doc.get_tags() %}
+                                <span class="document-tag" style="background-color: {{ tag.color }}">
+                                    {{ tag.name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="document-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('documents.view_document', id=doc.id) }}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i> View
+                            </a>
+                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#deleteModal" 
+                                    data-doc-id="{{ doc.id }}"
+                                    data-doc-name="{{ doc.original_filename }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Table View -->
+        <div id="tableView" class="view-transition view-hidden">
+            <div class="table-responsive">
+                <table class="table document-table">
+                    <thead>
+                        <tr>
+                            <th>Document</th>
+                            <th>Details</th>
+                            <th>Status</th>
+                            <th>Tags</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr data-search-item data-search-text="{{ doc.original_filename }} {{ doc.file_type }} {{ doc.status }}">
+                            <td style="max-width: 300px;">
+                                <div class="d-flex align-items-center">
+                                    <div class="table-document-icon {{ doc.file_type }}">
+                                        {% if doc.file_type == 'pdf' %}
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                        {% elif doc.file_type == 'docx' %}
+                                        <i class="bi bi-file-earmark-word"></i>
+                                        {% else %}
+                                        <i class="bi bi-file-earmark-text"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="table-document-title text-truncate">{{ doc.original_filename }}</div>
+                                        <div class="d-flex">
+                                            <span class="badge bg-secondary me-2">{{ doc.file_type.upper() }}</span>
+                                            <small class="text-muted">{{ doc.upload_date.strftime('%Y-%m-%d') }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <small><span class="text-muted">Size:</span> {{ (doc.file_size / 1024) | round(2) }} KB</small>
+                                    <small><span class="text-muted">Pages:</span> {{ doc.page_count }}</small>
+                                    <small><span class="text-muted">Paragraphs:</span> {{ doc.paragraph_count }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if doc.status == 'processed' %}
+                                <div class="status-indicator status-processed">
+                                    <i class="bi bi-check-circle me-1"></i> {{ doc.status }}
+                                </div>
+                                {% elif doc.status == 'error' %}
+                                <div class="status-indicator status-error">
+                                    <i class="bi bi-exclamation-triangle me-1"></i> {{ doc.status }}
+                                </div>
+                                {% else %}
+                                <div class="status-indicator status-pending">
+                                    <i class="bi bi-hourglass-split me-1"></i> {{ doc.status }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="tag-list">
+                                    {% for tag in doc.get_tags() %}
+                                    <span class="document-tag" style="background-color: {{ tag.color }}">
+                                        {{ tag.name }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">No tags</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('documents.view_document', id=doc.id) }}" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal" 
+                                            data-doc-id="{{ doc.id }}"
+                                            data-doc-name="{{ doc.original_filename }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="noResults" class="text-center py-5" style="display:none;">
+            <i class="bi bi-search display-4 text-muted"></i>
+            <h4 class="mt-3">No matching documents found</h4>
+            <p class="text-muted">Try adjusting your search criteria</p>
+        </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <span class="text-muted">Total: {{ documents|length }} documents</span>
+        
+        {% if documents|length > 0 %}
+        <button type="button" class="btn btn-outline-danger btn-sm" 
+                data-bs-toggle="modal" 
+                data-bs-target="#deleteAllModal">
+            <i class="bi bi-trash me-1"></i> Delete All
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <div class="document-icon mx-auto mb-3" style="background-color: rgba(239, 68, 68, 0.1); color: var(--error);">
+                        <i class="bi bi-trash"></i>
+                    </div>
+                    <h4>Are you sure?</h4>
+                    <p class="text-muted">You're about to delete <strong id="docName" class="text-danger"></strong></p>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span>This action cannot be undone. Paragraphs that only appear in this document will also be deleted.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-1"></i> Cancel
+                </button>
+                <form id="deleteForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Delete Document
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete All Confirmation Modal -->
+<div class="modal fade" id="deleteAllModal" tabindex="-1" aria-labelledby="deleteAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAllModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Delete All Documents
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <div class="document-icon mx-auto mb-3" style="background-color: rgba(239, 68, 68, 0.1); color: var(--error);">
+                        <i class="bi bi-trash"></i>
+                    </div>
+                    <h4>Delete All Documents?</h4>
+                    <p class="text-muted">You're about to delete <strong class="text-danger">all {{ documents|length }} documents</strong></p>
+                </div>
+                
+                <div class="alert alert-danger">
+                    <div class="fw-bold mb-2">This action will:</div>
+                    <ul class="mb-0">
+                        <li>Delete all <strong>{{ documents|length }}</strong> documents from the database</li>
+                        <li>Remove all document files from the server</li>
+                        <li>Delete all paragraphs from the database</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <p class="text-danger fw-bold">This action cannot be undone!</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-1"></i> Cancel
+                </button>
+                <form method="POST" action="{{ url_for('documents.delete_all_documents') }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Delete All Documents
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="bi bi-file-earmark-plus"></i>
+    </div>
+    <h3 class="empty-title">No documents uploaded yet</h3>
+    <p class="empty-description">Upload some documents to get started with analysis and comparison.</p>
+    <a href="{{ url_for('documents.upload') }}" class="btn btn-primary btn-lg">
+        <i class="bi bi-upload me-1"></i> Upload Documents
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // View toggle functionality
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const gridView = document.getElementById('gridView');
+        const tableView = document.getElementById('tableView');
+        
+        if (gridViewBtn && tableViewBtn && gridView && tableView) {
+            gridViewBtn.addEventListener('click', function() {
+                gridViewBtn.classList.add('active');
+                tableViewBtn.classList.remove('active');
+                gridView.classList.remove('view-hidden');
+                tableView.classList.add('view-hidden');
+            });
+            
+            tableViewBtn.addEventListener('click', function() {
+                tableViewBtn.classList.add('active');
+                gridViewBtn.classList.remove('active');
+                tableView.classList.remove('view-hidden');
+                gridView.classList.add('view-hidden');
+            });
+        }
+        
+        // Search functionality
+        const searchInput = document.getElementById('documentSearch');
+        const noResults = document.getElementById('noResults');
+        
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const searchItems = document.querySelectorAll('[data-search-item]');
+                let hasResults = false;
+                
+                searchItems.forEach(item => {
+                    const searchText = item.getAttribute('data-search-text').toLowerCase();
+                    if (searchText.includes(searchTerm)) {
+                        item.style.display = '';
+                        hasResults = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                if (noResults) {
+                    noResults.style.display = hasResults ? 'none' : 'block';
+                }
+            });
+        }
+        
+        // Delete modal setup
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function(event) {
+                // Button that triggered the modal
+                const button = event.relatedTarget;
+                
+                // Extract info from data attributes
+                const docId = button.getAttribute('data-doc-id');
+                const docName = button.getAttribute('data-doc-name');
+                
+                // Update the modal content
+                document.getElementById('docName').textContent = docName;
+                
+                // Update form action
+                document.getElementById('deleteForm').action = '/documents/delete/' + docId;
+            });
+        }
+    });
+</script>
+{% endblock %}

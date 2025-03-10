@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}Document Analyzer - Intelligent Content Analysis Tool{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #2563eb, #8b5cf6);
+        color: white;
+        padding: 4rem 0;
+        margin: -20px -20px 2rem -20px;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-title {
+        font-size: 2.75rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        animation: fadeInDown 0.8s ease-out;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        animation: fadeInUp 0.8s ease-out 0.3s both;
+    }
+
+    .hero-actions {
+        margin-top: 2rem;
+        animation: fadeInUp 0.8s ease-out 0.6s both;
+    }
+
+    .feature-card {
+        height: 100%;
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1.5rem auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 20px;
+        font-size: 2.5rem;
+        color: #fff;
+    }
+
+    .icon-upload {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+
+    .icon-analyze {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    }
+
+    .icon-export {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    .animate-fade-in-up {
+        opacity: 0;
+        animation: fadeInUp 0.8s ease forwards;
+    }
+
+    .feature-card:nth-child(1) {
+        animation-delay: 0.3s;
+    }
+
+    .feature-card:nth-child(2) {
+        animation-delay: 0.5s;
+    }
+
+    .feature-card:nth-child(3) {
+        animation-delay: 0.7s;
+    }
+
+    .list-group-item {
+        border-left: 0;
+        border-right: 0;
+        padding: 1rem 0;
+        transition: all 0.2s ease;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8fafc;
+    }
+
+    .list-group-item i {
+        color: #2563eb;
+    }
+
+    .step-number {
+        width: 36px;
+        height: 36px;
+        background-color: #2563eb;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
+    }
+
+    .step-content h6 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #334155;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <div class="container">
+        <h1 class="hero-title">Document Analyzer</h1>
+        <p class="hero-subtitle">Advanced text processing and content analysis for document management and migration projects</p>
+        <div class="hero-actions">
+            <a class="btn btn-light btn-lg me-3" href="{{ url_for('documents.upload') }}">
+                <i class="bi bi-cloud-upload me-2"></i> Upload Documents
+            </a>
+            <a class="btn btn-outline-light btn-lg" href="{{ url_for('documents.list_documents') }}">
+                <i class="bi bi-files me-2"></i> View Library
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card feature-card animate-fade-in-up h-100">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon icon-upload">
+                        <i class="bi bi-cloud-upload"></i>
+                    </div>
+                    <h5 class="card-title">Upload & Extract</h5>
+                    <p class="card-text text-muted">Upload PDF and Word documents to automatically extract text content with high accuracy.</p>
+                    <a href="{{ url_for('documents.upload') }}" class="btn btn-primary mt-2">
+                        <i class="bi bi-upload me-1"></i> Upload Documents
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card animate-fade-in-up h-100">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon icon-analyze">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <h5 class="card-title">Analyze & Compare</h5>
+                    <p class="card-text text-muted">Discover similarities between documents, analyze paragraph-level content, and identify patterns.</p>
+                    <a href="{{ url_for('similarity_map') }}" class="btn btn-primary mt-2">
+                        <i class="bi bi-diagram-3 me-1"></i> Content Map
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card animate-fade-in-up h-100">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon icon-export">
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                    </div>
+                    <h5 class="card-title">Export & Share</h5>
+                    <p class="card-text text-muted">Generate comprehensive Excel reports for document content, paragraphs, and similarity analysis.</p>
+                    <a href="{{ url_for('export') }}" class="btn btn-primary mt-2">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 pt-4">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <span class="badge p-2 me-2" style="background-color: #2563eb;">
+                            <i class="bi bi-stars text-white"></i>
+                        </span>
+                        Key Features
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item border-0 d-flex align-items-center ps-0">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-5"></i>
+                            <div>
+                                <strong>Intelligent Content Extraction</strong>
+                                <div class="text-muted small">Advanced text extraction from PDF and Word documents</div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 d-flex align-items-center ps-0">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-5"></i>
+                            <div>
+                                <strong>Paragraph-Level Analysis</strong>
+                                <div class="text-muted small">Identify and track shared content across documents</div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 d-flex align-items-center ps-0">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-5"></i>
+                            <div>
+                                <strong>Document Similarity</strong>
+                                <div class="text-muted small">Interactive visualization of document relationships</div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 d-flex align-items-center ps-0">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-5"></i>
+                            <div>
+                                <strong>Custom Tagging System</strong>
+                                <div class="text-muted small">Organize and categorize your content efficiently</div>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 d-flex align-items-center ps-0">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-5"></i>
+                            <div>
+                                <strong>Comprehensive Reports</strong>
+                                <div class="text-muted small">Export analysis results in multiple formats</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 pt-4">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <span class="badge p-2 me-2" style="background-color: #0ea5e9;">
+                            <i class="bi bi-journal-check text-white"></i>
+                        </span>
+                        Getting Started
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="steps">
+                        <div class="step d-flex mb-4">
+                            <div class="step-number me-3">1</div>
+                            <div class="step-content">
+                                <h6>Upload Documents</h6>
+                                <p class="text-muted mb-0">Upload PDF or Word documents. The system automatically extracts and processes the text content.</p>
+                            </div>
+                        </div>
+                        <div class="step d-flex mb-4">
+                            <div class="step-number me-3">2</div>
+                            <div class="step-content">
+                                <h6>Review & Analyze</h6>
+                                <p class="text-muted mb-0">View extracted content, document previews, and examine paragraph-level analysis.</p>
+                            </div>
+                        </div>
+                        <div class="step d-flex mb-4">
+                            <div class="step-number me-3">3</div>
+                            <div class="step-content">
+                                <h6>Explore Relationships</h6>
+                                <p class="text-muted mb-0">Visualize document similarities and compare documents side by side to identify shared content.</p>
+                            </div>
+                        </div>
+                        <div class="step d-flex">
+                            <div class="step-number me-3">4</div>
+                            <div class="step-content">
+                                <h6>Export Results</h6>
+                                <p class="text-muted mb-0">Generate Excel reports with document content, paragraphs, and analysis results.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('documents.upload') }}" class="btn btn-primary">
+                            <i class="bi bi-arrow-right-circle me-1"></i> Start Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Paragraph Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .paragraph-content {
+        max-height: 120px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        border-left: 3px solid #4361ee;
+    }
+    .document-badge {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+        display: inline-block;
+        margin-bottom: 5px;
+    }
+    .highlight-row {
+        animation: highlight-fade 2s ease-in-out;
+    }
+    @keyframes highlight-fade {
+        0% { background-color: rgba(67, 97, 238, 0.2); }
+        100% { background-color: transparent; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-text-paragraph me-2"></i>Paragraph Analysis</h2>
+    <div>
+        <a href="{{ url_for('documents.list_documents') }}" class="btn btn-secondary me-2">
+            <i class="bi bi-files me-1"></i> Back to Documents
+        </a>
+        <a href="{{ url_for('export_paragraphs') }}" class="btn btn-success">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Paragraphs
+        </a>
+    </div>
+</div>
+
+{% if paragraphs %}
+<div class="alert alert-info d-flex align-items-center">
+    <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+    <div>
+        <strong>Analysis Summary:</strong> Found {{ paragraphs|length }} unique paragraphs across all documents.
+        {% if shared_paragraphs|length > 0 %}
+        <span class="badge bg-primary ms-2">{{ shared_paragraphs|length }} shared paragraphs</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>All Paragraphs</h5>
+            <div class="d-flex">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input class="form-control border-start-0" type="search" placeholder="Search paragraphs..." id="paragraphSearch">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="paragraphTable">
+                <thead class="table-light">
+                    <tr>
+                        <th width="5%">ID</th>
+                        <th width="55%">Paragraph Content</th>
+                        <th width="10%" class="text-center">Count</th>
+                        <th width="30%">Documents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for para in paragraphs %}
+                    <tr id="paragraph-{{ para.id }}">
+                        <td>{{ para.id }}</td>
+                        <td>
+                            <div class="paragraph-content">
+                                {{ para.content[:500] }}{% if para.content|length > 500 %}...{% endif %}
+                            </div>
+                            <div class="mt-2">
+                                {% for tag in para.get_tags() %}
+                                <span class="badge" style="background-color: {{ tag.color }}">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge {{ 'bg-primary' if para.documents|length > 1 else 'bg-secondary' }} rounded-pill">{{ para.documents|length }}</span>
+                        </td>
+                        <td>
+                            <div class="document-links">
+                                {% for doc in para.documents %}
+                                <a href="{{ url_for('documents.view_document', id=doc.id) }}" class="badge bg-light text-dark border document-badge mb-1">
+                                    {% if doc.file_type == 'pdf' %}
+                                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                    {% elif doc.file_type == 'docx' %}
+                                    <i class="bi bi-file-earmark-word text-primary"></i>
+                                    {% else %}
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    {% endif %}
+                                    {{ doc.original_filename }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted">Showing {{ paragraphs|length }} paragraphs</span>
+            </div>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="exportBtn">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info d-flex align-items-center">
+    <i class="bi bi-info-circle-fill fs-3 me-3"></i>
+    <div>
+        <h5>No paragraphs found</h5>
+        <p class="mb-0">Upload some documents to get started with paragraph analysis and comparison.</p>
+    </div>
+</div>
+
+<div class="text-center py-5">
+    <div class="mb-4">
+        <i class="bi bi-cloud-upload display-1 text-muted"></i>
+    </div>
+    <h3>Ready to analyze your documents?</h3>
+    <p class="text-muted mb-4">Upload PDF or Word files to start extracting and analyzing content.</p>
+    <a href="{{ url_for('documents.upload') }}" class="btn btn-primary btn-lg">
+        <i class="bi bi-upload me-1"></i> Upload Documents
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const searchInput = document.getElementById('paragraphSearch');
+        const table = document.getElementById('paragraphTable');
+        
+        if (searchInput && table) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Highlight paragraph function
+        window.highlightParagraph = function(id) {
+            const paragraphRow = document.getElementById(`paragraph-${id}`);
+            if (paragraphRow) {
+                // Scroll to the paragraph
+                paragraphRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Add highlighting animation
+                paragraphRow.classList.remove('highlight-row');
+                void paragraphRow.offsetWidth; // Trigger reflow
+                paragraphRow.classList.add('highlight-row');
+            }
+        };
+        
+        // Export button functionality
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function() {
+                window.location.href = "{{ url_for('export_paragraphs') }}";
+            });
+        }
+    });
+</script>
+{% endblock %}
